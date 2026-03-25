@@ -29,9 +29,18 @@ export function TextScramble({
     if (!started) return;
 
     let iteration = 0;
+    let completed = false;
     const totalFrames = text.length * 3;
 
+    const complete = () => {
+      if (completed) return;
+      completed = true;
+      setDisplay(text);
+    };
+
     const scramble = () => {
+      if (completed) return;
+
       const progress = iteration / totalFrames;
       const revealedCount = Math.floor(progress * text.length);
 
@@ -50,12 +59,25 @@ export function TextScramble({
         iteration++;
         frameRef.current = requestAnimationFrame(scramble);
       } else {
-        setDisplay(text);
+        complete();
       }
     };
 
+    // Fallback: if animation stalls (e.g. iOS background), force complete
+    const fallbackTimer = setTimeout(complete, 3000);
+
+    // Complete immediately if page becomes hidden mid-animation
+    const onVisibilityChange = () => {
+      if (document.hidden) complete();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
     frameRef.current = requestAnimationFrame(scramble);
-    return () => cancelAnimationFrame(frameRef.current);
+    return () => {
+      cancelAnimationFrame(frameRef.current);
+      clearTimeout(fallbackTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [started, text]);
 
   return (
