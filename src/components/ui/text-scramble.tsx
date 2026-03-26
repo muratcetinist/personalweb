@@ -15,16 +15,19 @@ export function TextScramble({
   className = "",
   delay = 1.2,
 }: TextScrambleProps) {
-  const [display, setDisplay] = useState("");
-  const [started, setStarted] = useState(false);
+  const [display, setDisplay] = useState(text);
+  const [phase, setPhase] = useState<"idle" | "scrambling" | "done">("idle");
 
+  // Client mount — reset for animation
   useEffect(() => {
-    const timer = setTimeout(() => setStarted(true), delay * 1000);
+    setDisplay("");
+    const timer = setTimeout(() => setPhase("scrambling"), delay * 1000);
     return () => clearTimeout(timer);
   }, [delay]);
 
+  // Scramble animation
   useEffect(() => {
-    if (!started) return;
+    if (phase !== "scrambling") return;
 
     let iteration = 0;
     const totalFrames = text.length * 3;
@@ -48,15 +51,26 @@ export function TextScramble({
       if (iteration > totalFrames) {
         clearInterval(interval);
         setDisplay(text);
+        setPhase("done");
       }
     }, 30);
 
-    return () => clearInterval(interval);
-  }, [started, text]);
+    // Fallback: if interval stalls, force complete after 3s
+    const fallback = setTimeout(() => {
+      clearInterval(interval);
+      setDisplay(text);
+      setPhase("done");
+    }, 3000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(fallback);
+    };
+  }, [phase, text]);
 
   return (
     <p
-      className={`${className} transition-opacity duration-300 ${started ? "opacity-100" : "opacity-0"}`}
+      className={`${className} transition-opacity duration-300 ${phase === "idle" ? "opacity-0" : "opacity-100"}`}
     >
       {display}
     </p>

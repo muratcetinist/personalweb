@@ -17,7 +17,7 @@ export function GrainOverlay() {
           <feTurbulence
             type="fractalNoise"
             baseFrequency="0.8"
-            numOctaves="4"
+            numOctaves="1"
             stitchTiles="stitch"
           />
           <feColorMatrix type="saturate" values="0" />

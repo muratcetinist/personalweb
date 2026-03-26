@@ -31,11 +31,17 @@ export function FloatingParticles() {
     };
     resize();
 
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(document.documentElement);
+    let resizeObserver: ResizeObserver | null = null;
+    try {
+      resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(document.documentElement);
+    } catch {}
 
     // Initialize particles
-    const count = Math.floor((window.innerWidth * window.innerHeight) / 25000);
+    const isMobile = window.innerWidth < 768;
+    const count = Math.floor(
+      (window.innerWidth * window.innerHeight) / (isMobile ? 50000 : 25000)
+    );
     particlesRef.current = Array.from({ length: count }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
@@ -80,7 +86,7 @@ export function FloatingParticles() {
 
     return () => {
       cancelAnimationFrame(animationRef.current);
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
     };
   }, []);
 
